@@ -10,32 +10,44 @@ const dbName = "tweetlogs";
 const collectionName = "tweets";
 
 async function getNearbyLocations(coordinates) {
-  const collection = client.db(dbName).collection(collectionName);
-  const cursor = collection.aggregate([
-    {
-      $geoNear: {
-        near: { type: "Point", coordinates },
-        distanceField: "dist.calculated",
-        maxDistance: 100000,
-        includeLocs: "dist.location",
-        spherical: true,
+  try {
+    const collection = client.db(dbName).collection(collectionName);
+    const cursor = collection.aggregate([
+      {
+        $geoNear: {
+          near: { type: "Point", coordinates },
+          distanceField: "dist.calculated",
+          maxDistance: 100000,
+          includeLocs: "dist.location",
+          spherical: true,
+        },
       },
-    },
-    { $sort: { distance: 1 } },
-    {
-      $limit: 5,
-    },
-  ]);
+      {
+        $sort: {
+          "dist.calculated": 1,
+        },
+      },
+      {
+        $limit: 5,
+      },
+    ]);
 
-  const set = new Set();
-  for await (const doc of cursor) {
-    const proximity = "";
-    set.add(
-      `${doc.formatted_address}\nhttps://www.google.com/maps/?q=${doc.location.coordinates[0]},${doc.location.coordinates[1]}`
-    );
+    const set = new Set();
+    let c = 1;
+    for await (const doc of cursor) {
+      const proximity = "";
+      set.add(
+        `${c}.\Mesaj: ${doc.raw.full_text}\n\nLink: https://www.google.com/maps/?q=${doc.location.coordinates[0]},${doc.location.coordinates[1]}`
+      );
+      c++;
+    }
+    return set.size
+      ? Array.from(set).join("\n\n")
+      : "Yakınınızda Twitter üzerinden enkaz bulunamadı.";
+  } catch (e) {
+    console.log(e);
+    return "Bir hata oluştu.";
   }
-
-  return Array.from(set).join("\n\n");
 }
 
 exports.getNearbyLocations = getNearbyLocations;
