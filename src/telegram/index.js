@@ -7,6 +7,13 @@ const token = process.env.TELEGRAM_BOT_TOKEN;
 // Create a bot that uses 'polling' to fetch new updates
 const bot = new TelegramBot(token, { polling: true });
 
+bot.onText(/start/, (msg) => {
+  bot.sendMessage(
+    msg.chat.id,
+    "Merhaba. Yakındaki yardım ihtiyaçlarını görüntüleyebilmek için lütfen lokasyonunuzu gönderin."
+  );
+});
+
 bot.onText(/getLocation/, (msg) => {
   const opts = {
     reply_markup: JSON.stringify({
